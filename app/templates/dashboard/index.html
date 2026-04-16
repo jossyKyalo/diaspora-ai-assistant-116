@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vunoh Global — Task Assistant</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="wordmark">Vunoh</div>
+      <div class="tagline">Diaspora Services</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" href="#">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="1" y="1" width="6" height="6" rx="1.5"/>
+          <rect x="9" y="1" width="6" height="6" rx="1.5"/>
+          <rect x="1" y="9" width="6" height="6" rx="1.5"/>
+          <rect x="9" y="9" width="6" height="6" rx="1.5"/>
+        </svg>
+        Dashboard
+      </a>
+      <a class="nav-item" href="#request-section" onclick="document.getElementById('requestInput').focus()">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="8" cy="8" r="6.5"/>
+          <line x1="8" y1="5" x2="8" y2="8.5"/>
+          <line x1="8" y1="10.5" x2="8" y2="11.5"/>
+        </svg>
+        New Request
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <p>Vunoh Global<br/>AI Task Assistant<br/>v1.0</p>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+
+    <div class="topbar">
+      <span class="topbar-title">Task Assistant</span>
+      <span class="topbar-meta" id="topbar-date"></span>
+    </div>
+
+    <div class="content">
+
+      <!-- Request section -->
+      <div class="request-section" id="request-section">
+        <div class="request-card">
+          <div class="request-card-header">
+            <h2>What do you need done back home?</h2>
+            <p>Describe your request in plain English. The assistant will extract the details, assess risk, and create a tracked task.</p>
+          </div>
+          <div class="request-card-body">
+            <div class="input-row">
+              <textarea
+                id="requestInput"
+                class="request-input"
+                placeholder="e.g. I need to send KES 20,000 to my mother in Kisumu urgently…"
+                rows="1"
+              ></textarea>
+              <button class="btn btn-primary" id="submitBtn">Submit Request</button>
+            </div>
+            <div class="examples-row">
+              <span class="example-chip" data-text="Send KES 15,000 to my mother in Kisumu urgently.">💸 Send money</span>
+              <span class="example-chip" data-text="Please verify my land title deed for the plot in Karen, Nairobi.">📄 Verify land title</span>
+              <span class="example-chip" data-text="I need someone to clean my apartment in Westlands this Friday.">🧹 Hire cleaner</span>
+              <span class="example-chip" data-text="Book an airport transfer from JKIA to Kilimani on Saturday at 6am.">🚗 Airport transfer</span>
+              <span class="example-chip" data-text="Can a lawyer help me review a rental agreement in Ngong Road?">⚖️ Legal help</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result panel -->
+      <div class="result-panel" id="resultPanel">
+        <div class="result-grid">
+
+          <!-- Task code + assignment --> 
+          <div class="result-card">
+            <div class="result-card-header"> 
+              <span class="result-card-title">Task Created</span>
+            </div>
+            <div class="result-card-body">
+              <div class="task-code-display" id="r-task-code">—</div>
+              <div class="task-code-caption">Use this code to follow up on your request</div>
+              <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                <span style="font-size:12px;color:var(--text-muted)">Intent:</span>
+                <span id="r-intent" style="font-size:13.5px;font-weight:600;color:var(--text-primary)">—</span>
+              </div>
+              <div style="margin-top:8px;display:flex;gap:10px;align-items:center">
+                <span style="font-size:12px;color:var(--text-muted)">Assigned to:</span>
+                <span class="assignment-pill" id="r-assignment">—</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Extracted entities -->
+          <div class="result-card">
+            <div class="result-card-header">
+              <span class="result-card-title">Extracted Details</span>
+            </div>
+            <div class="result-card-body">
+              <div class="entity-list" id="r-entities"></div>
+            </div>
+          </div>
+
+          <!-- Risk -->
+          <div class="result-card">
+            <div class="result-card-header">
+              <span class="result-card-title">Risk Assessment</span>
+            </div>
+            <div class="result-card-body">
+              <div class="risk-summary">
+                <div class="risk-score-big low" id="r-risk-score">0</div>
+                <div>
+                  <div id="r-risk-label"></div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:3px">out of 100</div>
+                </div>
+              </div>
+              <ul class="risk-reason-list" id="r-risk-reasons"></ul>
+            </div>
+          </div>
+
+          <!-- Steps -->
+          <div class="result-card">
+            <div class="result-card-header">
+              <span class="result-card-title">Fulfilment Steps</span>
+            </div>
+            <div class="result-card-body">
+              <ul class="steps-list" id="r-steps"></ul>
+            </div>
+          </div>
+
+          <!-- Messages -->
+          <div class="result-card result-card-full">
+            <div class="result-card-header">
+              <span class="result-card-title">Confirmation Messages</span>
+            </div>
+            <div class="result-card-body">
+              <div class="msg-tabs">
+                <button class="msg-tab active" data-tab="whatsapp">WhatsApp</button>
+                <button class="msg-tab" data-tab="email">Email</button>
+                <button class="msg-tab" data-tab="sms">SMS</button>
+              </div>
+              <div class="msg-content active" id="msg-whatsapp">
+                <div class="msg-bubble"></div>
+                <button class="msg-copy" data-for="whatsapp">Copy</button>
+              </div>
+              <div class="msg-content" id="msg-email">
+                <div class="msg-bubble"></div>
+                <button class="msg-copy" data-for="email">Copy</button>
+              </div>
+              <div class="msg-content" id="msg-sms">
+                <div class="msg-bubble"></div>
+                <button class="msg-copy" data-for="sms">Copy</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row" style="margin-top:32px">
+        <div class="stat-card">
+          <div class="stat-label">Total Tasks</div>
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-sub">All time</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pending</div>
+          <div class="stat-value" id="stat-pending" style="color:var(--amber)">—</div>
+          <div class="stat-sub">Awaiting action</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">In Progress</div>
+          <div class="stat-value" id="stat-inprogress" style="color:var(--blue)">—</div>
+          <div class="stat-sub">Being handled</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Completed</div>
+          <div class="stat-value" id="stat-completed" style="color:var(--green)">—</div>
+          <div class="stat-sub">Done</div>
+        </div>
+      </div>
+
+      <!-- Tasks table -->
+      <div class="card" style="margin-top:20px">
+        <div class="card-header">
+          <span class="card-title">All Tasks</span>
+          <button class="btn btn-ghost btn-sm" onclick="loadTasks()">Refresh</button>
+        </div>
+        <div class="tasks-table-wrap">
+          <table class="tasks-table">
+            <thead>
+              <tr>
+                <th>Task Code</th>
+                <th>Intent</th>
+                <th>Risk</th>
+                <th>Status</th>
+                <th>Assigned To</th>
+                <th>Created</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tasksBody">
+              <tr>
+                <td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">
+                  Loading tasks…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- Task detail modal -->
+<div class="modal-overlay hidden" id="taskModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Task Details</span>
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  document.getElementById("topbar-date").textContent = new Date().toLocaleDateString("en-KE", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric"
+  });
+</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
