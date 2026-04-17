@@ -12,7 +12,14 @@ def index():
 def get_tasks():
     try:
         customer_identifier = request.args.get("customer_identifier")
+        if not customer_identifier:
+            return jsonify([]), 200
+        
         tasks = supabase_service.get_tasks_by_customer(customer_identifier)
+
+        if not isinstance(tasks, list):
+            tasks = []
+
         for task in tasks:
             import json
             if isinstance(task.get("entities"), str):
@@ -32,4 +39,5 @@ def get_tasks():
                     task["risk_reasons"] = []
         return jsonify(tasks), 200
     except Exception as e:
+        print("ERROR:", e)
         return jsonify({"error": str(e)}), 500

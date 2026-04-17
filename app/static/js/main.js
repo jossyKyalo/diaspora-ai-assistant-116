@@ -253,6 +253,19 @@ async function loadTasks() {
   try {
     const tasks = await API.tasks(currentCustomer || "");
 
+    if (!Array.isArray(tasks)) {
+      console.error("Invalid tasks response:", tasks);
+
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center;padding:40px;color:var(--red);">
+            Failed to load tasks (server error or invalid response)
+          </td>
+        </tr>`;
+
+      return;
+    }
+
     if (statsEl.total) {
       statsEl.total.textContent = tasks.length;
       statsEl.pending.textContent = tasks.filter((t) => t.status === "Pending").length;

@@ -1,6 +1,6 @@
 from supabase import create_client, Client
 from flask import current_app
-import supabase
+ 
 
 
 def get_client() -> Client:
@@ -11,6 +11,10 @@ def get_client() -> Client:
 
 def create_task(task_data: dict) -> dict:
     client = get_client()
+
+    if "customer_identifier" in task_data and task_data["customer_identifier"]:
+        task_data["customer_identifier"] = task_data["customer_identifier"].strip().lower()
+
     response = client.table("tasks").insert(task_data).execute()
     return response.data[0] if response.data else None
 
@@ -26,13 +30,26 @@ def get_all_tasks() -> list:
     return response.data or []
 
 def get_tasks_by_customer(customer_identifier):
-    response = supabase.table("tasks") \
-        .select("*") \
-        .eq("customer_identifier", customer_identifier) \
-        .order("created_at", desc=True) \
-        .execute()
+    client = get_client()
 
-    return response.data
+    if not customer_identifier:
+        response = (
+            client.table("tasks")
+            .select("*")
+            .order("created_at", desc=True)
+            .execute()
+        )
+        return response.data or []
+
+    response = (
+        client.table("tasks")
+        .select("*")
+        .eq("customer_identifier", customer_identifier.strip().lower())
+        .order("created_at", desc=True)
+        .execute()
+    )
+
+    return response.data or []
 
 def get_task_by_code(task_code: str) -> dict:
     client = get_client()
@@ -68,17 +85,6 @@ def save_messages(task_id: str, messages: dict) -> dict:
     response = client.table("task_messages").insert(payload).execute()
     return response.data[0] if response.data else None
 
-
-def get_tasks_by_identifier(identifier: str) -> list:
-    client = get_client()
-    response = (
-        client.table("tasks")
-        .select("intent, risk_score, status, created_at")
-        .eq("customer_identifier", identifier.strip().lower())
-        .order("created_at", desc=True)
-        .execute()
-    )
-    return response.data or []
 
 
 def get_messages_for_task(task_id: str) -> dict:
