@@ -249,20 +249,28 @@ async function loadTasks() {
   };
 
   if (!tbody) return;
+ 
+  const customerInput = document.getElementById("customerIdentifier");
+  const identifier = customerInput ? customerInput.value.trim() : "";
+
+ 
+  currentCustomer = identifier;
+
+  if (!identifier) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">Please enter your phone or email to see your tasks.</td></tr>`;
+    if (statsEl.total) statsEl.total.textContent = "0";
+    if (statsEl.pending) statsEl.pending.textContent = "0";
+    if (statsEl.inprogress) statsEl.inprogress.textContent = "0";
+    if (statsEl.completed) statsEl.completed.textContent = "0";
+    return;
+  }
 
   try {
-    const tasks = await API.tasks(currentCustomer || "");
+    const tasks = await API.tasks(identifier);   
 
     if (!Array.isArray(tasks)) {
       console.error("Invalid tasks response:", tasks);
-
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="8" style="text-align:center;padding:40px;color:var(--red);">
-            Failed to load tasks (server error or invalid response)
-          </td>
-        </tr>`;
-
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--red);">Failed to load tasks (server error or invalid response)</td></tr>`;
       return;
     }
 
@@ -274,7 +282,7 @@ async function loadTasks() {
     }
 
     if (tasks.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">No tasks yet. Submit a request above to get started.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">No tasks yet for this customer. Submit a request above.</td></tr>`;
       return;
     }
 
@@ -293,7 +301,8 @@ async function loadTasks() {
         <td><span class="assignment-pill">${task.employee_assignment || "—"}</span></td>
         <td class="ts">${timeAgo(task.created_at)}</td>
         <td><button class="view-btn" onclick="openModal('${task.task_code}')">View</button></td>
-      </tr>`).join("");
+      </tr>
+    `).join("");
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--red);">Failed to load tasks. Check your connection.</td></tr>`;
     console.error(err);
@@ -406,6 +415,13 @@ async function openModal(taskCode) {
   }
 }
 
+const customerIdentifierInput = document.getElementById("customerIdentifier");
+if (customerIdentifierInput) {
+  customerIdentifierInput.addEventListener("change", () => {
+    loadTasks();
+  }); 
+}
+
 document.getElementById("modalClose")?.addEventListener("click", () => {
   document.getElementById("taskModal").classList.add("hidden");
 });
@@ -413,7 +429,8 @@ document.getElementById("modalClose")?.addEventListener("click", () => {
 document.getElementById("taskModal")?.addEventListener("click", (e) => {
   if (e.target === e.currentTarget) e.currentTarget.classList.add("hidden");
 });
+ 
 
-if (document.getElementById("tasksBody")) {
-  loadTasks();
+if (document.getElementById("tasksBody")) { 
+  setTimeout(() => loadTasks(), 100);
 }
