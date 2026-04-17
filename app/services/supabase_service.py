@@ -1,5 +1,6 @@
 from supabase import create_client, Client
 from flask import current_app
+import supabase
 
 
 def get_client() -> Client:
@@ -24,6 +25,14 @@ def get_all_tasks() -> list:
     )
     return response.data or []
 
+def get_tasks_by_customer(customer_identifier):
+    response = supabase.table("tasks") \
+        .select("*") \
+        .eq("customer_identifier", customer_identifier) \
+        .order("created_at", desc=True) \
+        .execute()
+
+    return response.data
 
 def get_task_by_code(task_code: str) -> dict:
     client = get_client()

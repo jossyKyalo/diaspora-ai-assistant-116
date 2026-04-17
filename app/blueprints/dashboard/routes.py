@@ -1,4 +1,4 @@
-from flask import render_template, jsonify
+from flask import render_template, jsonify, request
 from app.blueprints.dashboard import dashboard_bp
 from app.services import supabase_service
 
@@ -11,7 +11,8 @@ def index():
 @dashboard_bp.route("/api/tasks", methods=["GET"])
 def get_tasks():
     try:
-        tasks = supabase_service.get_all_tasks()
+        customer_identifier = request.args.get("customer_identifier")
+        tasks = supabase_service.get_tasks_by_customer(customer_identifier)
         for task in tasks:
             import json
             if isinstance(task.get("entities"), str):

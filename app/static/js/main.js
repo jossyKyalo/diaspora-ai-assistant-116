@@ -1,3 +1,5 @@
+let currentCustomer = "";
+
 const API = {
   submit: (msg, identifier) =>
     fetch("/tasks/submit", {
@@ -6,7 +8,9 @@ const API = {
       body: JSON.stringify({ message: msg, customer_identifier: identifier }),
     }).then((r) => r.json()),
 
-  tasks: () => fetch("/dashboard/api/tasks").then((r) => r.json()),
+  tasks: (identifier) =>
+    fetch(`/dashboard/api/tasks?customer_identifier=${encodeURIComponent(identifier)}`)
+      .then((r) => r.json()),
 
   updateStatus: (id, status) =>
     fetch(`/tasks/${id}/status`, {
@@ -101,6 +105,7 @@ if (submitBtn) {
 async function handleSubmit() {
   const msg = textarea.value.trim();
   const identifier = document.getElementById("customerIdentifier")?.value.trim() || "";
+  currentCustomer = identifier;
 
   if (!msg) {
     toast("Please describe what you need.", "error");
@@ -246,7 +251,7 @@ async function loadTasks() {
   if (!tbody) return;
 
   try {
-    const tasks = await API.tasks();
+    const tasks = await API.tasks(currentCustomer || "");
 
     if (statsEl.total) {
       statsEl.total.textContent = tasks.length;
@@ -321,7 +326,7 @@ async function openModal(taskCode) {
 
     const entitiesHtml = Object.keys(entities).length
       ? Object.entries(entities).map(([k, v]) =>
-          `<div class="entity-tag"><span>${k.replace(/_/g, " ")}</span>${v}</div>`).join("")
+        `<div class="entity-tag"><span>${k.replace(/_/g, " ")}</span>${v}</div>`).join("")
       : `<span style="color:var(--text-muted);font-size:13px">No entities extracted</span>`;
 
     const stepsHtml = steps.length
