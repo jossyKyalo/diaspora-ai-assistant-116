@@ -19,6 +19,7 @@ def submit_task():
         return jsonify({"error": "Message is required"}), 400
 
     user_message = body["message"].strip()
+    customer_identifier = body.get("customer_identifier", "").strip().lower() or None
 
     try:
         extracted = ai_service.extract_intent(user_message)
@@ -28,7 +29,14 @@ def submit_task():
     intent = extracted.get("intent", "check_status")
     entities = extracted.get("entities", {})
 
-    risk_result = risk_service.score_request(intent, entities)
+    customer_history = []
+    if customer_identifier:
+        try:
+            customer_history = supabase_service.get_tasks_by_identifier(customer_identifier)
+        except Exception:
+            customer_history = []
+
+    risk_result = risk_service.score_request(intent, entities, customer_history)
 
     task_code = generate_task_code()
 
@@ -47,6 +55,7 @@ def submit_task():
     task_data = {
         "task_code": task_code,
         "original_message": user_message,
+        "customer_identifier": customer_identifier,
         "intent": intent,
         "entities": json.dumps(entities),
         "risk_score": risk_result["score"],
@@ -78,6 +87,8 @@ def submit_task():
         "messages": messages,
         "employee_assignment": risk_result["employee_assignment"],
         "status": "Pending",
+        "returning_customer": len(customer_history) > 0,
+        "prior_tasks": len(customer_history),
     }), 201
 
 

@@ -1,13 +1,30 @@
 import json
 import re
-import google.generativeai as genai
+from groq import Groq
 from flask import current_app
 
+def _get_client():
+    return Groq(api_key=current_app.config["GROQ_API_KEY"])
 
-def _get_model():
-    genai.configure(api_key=current_app.config["GEMINI_API_KEY"])
-    return genai.GenerativeModel("gemini-1.5-flash")
+def _call_llm(prompt: str) -> str:
+    client = _get_client()
 
+    response = client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a strict JSON generator. Output ONLY valid JSON. No explanations."
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        temperature=0.2
+    )
+
+    return response.choices[0].message.content.strip()
 
 INTENT_SYSTEM_PROMPT = """
 You are an AI assistant for Vunoh Global, a platform that helps Kenyans living abroad manage tasks back home.
@@ -85,40 +102,40 @@ Return ONLY the JSON object. Nothing else.
 
 
 def extract_intent(user_message: str) -> dict:
-    model = _get_model()
     prompt = f"{INTENT_SYSTEM_PROMPT}\n\nCustomer message:\n{user_message}"
-    response = model.generate_content(prompt)
-    raw = response.text.strip()
-    raw = _strip_code_fences(raw)
-    return json.loads(raw)
-
+    raw = _call_llm(prompt) 
+    return safe_json_loads(raw)
 
 def generate_steps(intent: str, entities: dict, task_code: str) -> list:
-    model = _get_model()
     summary = f"Task code: {task_code}\nIntent: {intent}\nDetails: {json.dumps(entities, indent=2)}"
     prompt = f"{STEPS_SYSTEM_PROMPT}\n\nTask summary:\n{summary}"
-    response = model.generate_content(prompt)
-    raw = response.text.strip()
-    raw = _strip_code_fences(raw)
-    return json.loads(raw)
+    
+    raw = _call_llm(prompt) 
+    return safe_json_loads(raw)
 
 
 def generate_messages(intent: str, entities: dict, task_code: str, risk_label: str) -> dict:
-    model = _get_model()
     summary = (
         f"Task code: {task_code}\n"
         f"Intent: {intent}\n"
         f"Risk level: {risk_label}\n"
         f"Details: {json.dumps(entities, indent=2)}"
     )
+
     prompt = f"{MESSAGES_SYSTEM_PROMPT}\n\nTask summary:\n{summary}"
-    response = model.generate_content(prompt)
-    raw = response.text.strip()
-    raw = _strip_code_fences(raw)
-    return json.loads(raw)
+
+    raw = _call_llm(prompt) 
+    return safe_json_loads(raw)
 
 
 def _strip_code_fences(text: str) -> str:
     text = re.sub(r"^```(?:json)?\s*", "", text)
     text = re.sub(r"\s*```$", "", text)
     return text.strip()
+
+def safe_json_loads(raw: str):
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        cleaned = _strip_code_fences(raw)
+        return json.loads(cleaned)

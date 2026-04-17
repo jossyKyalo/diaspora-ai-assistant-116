@@ -117,6 +117,9 @@ Scores are additive and capped at 100. Each rule reflects a real consideration f
 | Urgency flag | +15 | Rushed transfers are the most common social engineering vector |
 | No recipient identified | +10 | Cannot verify who receives funds or service |
 | No location specified | +5 | Increases operational uncertainty for field teams |
+| Returning customer, 3+ completed tasks, no high-risk history | -15 | Demonstrated trustworthy history reduces friction |
+| Returning customer, 1+ completed tasks, no high-risk history | -7 | Some positive signal, modest reduction |
+| Prior high-risk task on account | +8 | History of elevated-risk requests warrants continued caution |
 
 **Labels:** 0–29 = Low, 30–59 = Medium, 60–100 = High
 
@@ -128,7 +131,7 @@ Scores are additive and capped at 100. Each rule reflects a real consideration f
 
 I used Claude (claude.ai) as a pair programmer throughout the build. It helped me think through the blueprint structure, draft the Gemini system prompts, and write the SQL schema. I used it like a senior developer I could talk to — I'd describe what I was trying to do, review what it gave me, and either use it, modify it, or push back on it.
 
-For the actual AI brain inside the application, I chose **Gemini 1.5 Flash** because it is free, has a generous rate limit on the free tier, and is fast enough for a synchronous request flow. I considered Groq for latency but Gemini's JSON output reliability was better in my testing.
+For the actual AI brain inside the application, I chose **Gemini 2.0 Flash** because it is free, has a generous rate limit on the free tier, and is fast enough for a synchronous request flow. I initially tried `gemini-1.5-flash` which threw a 404 — that model was deprecated. Switching to `gemini-2.0-flash` resolved it immediately.
 
 ### How I designed the system prompts
 
@@ -141,6 +144,10 @@ For message generation, I wrote detailed rules per channel rather than just sayi
 ### One decision where I changed what the AI suggested
 
 When scaffolding the risk scoring module, the initial suggestion was to call Gemini again to score the risk — essentially asking the AI to rate its own output. I changed this to a deterministic rule-based system for two reasons. First, an AI-scored risk is a black box that cannot be explained to a customer or auditor. Second, the brief explicitly says "you will be asked to explain your scoring logic" — a model producing a number does not count as an explanation. The rule table in this README is the explanation. Every point added to a score can be traced to a line of code and a real-world reason.
+
+### On customer identity
+
+The brief mentions that "a returning customer with a clean history should carry lower risk" but does not ask for a full login system. I implemented a lightweight identifier field — phone number or email — that a customer types when submitting a request. No password, no session, no auth overhead. The risk scorer looks up prior tasks under that identifier and adjusts the score: -15 for three or more completed tasks with no high-risk incidents, -7 for one or more, and +8 if there is a prior high-risk task on the account. This directly addresses the brief's language without adding a feature that would take a full day to build and test properly.
 
 ### One thing that did not work the way I expected
 

@@ -60,6 +60,19 @@
             <p>Describe your request in plain English. The assistant will extract the details, assess risk, and create a tracked task.</p>
           </div>
           <div class="request-card-body">
+            <div style="margin-bottom:14px">
+              <label style="display:block;font-size:12.5px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;">
+                Your phone or email <span style="color:var(--text-muted);font-weight:400">(used to track your tasks)</span>
+              </label>
+              <input
+                type="text"
+                id="customerIdentifier"
+                placeholder="e.g. +254712345678 or jane@email.com"
+                style="width:100%;max-width:380px;border:1.5px solid var(--border-strong);border-radius:var(--radius);padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text-primary);background:var(--surface);transition:border-color 0.2s;"
+                onfocus="this.style.borderColor='var(--accent)';this.style.outline='none';this.style.boxShadow='0 0 0 3px rgba(200,98,42,0.12)'"
+                onblur="this.style.borderColor='var(--border-strong)';this.style.boxShadow='none'"
+              />
+            </div>
             <div class="input-row">
               <textarea
                 id="requestInput"
@@ -84,9 +97,9 @@
       <div class="result-panel" id="resultPanel">
         <div class="result-grid">
 
-          <!-- Task code + assignment --> 
+          <!-- Task code + assignment -->
           <div class="result-card">
-            <div class="result-card-header"> 
+            <div class="result-card-header">
               <span class="result-card-title">Task Created</span>
             </div>
             <div class="result-card-body">
@@ -99,6 +112,12 @@
               <div style="margin-top:8px;display:flex;gap:10px;align-items:center">
                 <span style="font-size:12px;color:var(--text-muted)">Assigned to:</span>
                 <span class="assignment-pill" id="r-assignment">—</span>
+              </div>
+              <div id="r-returning" style="display:none;margin-top:12px">
+                <span style="font-size:12px;background:var(--green-soft);color:var(--green);border-radius:20px;padding:3px 10px;font-weight:500;">
+                  Returning customer
+                </span>
+                <span id="r-prior-count" style="font-size:12px;color:var(--text-muted);margin-left:6px"></span>
               </div>
             </div>
           </div>

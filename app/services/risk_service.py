@@ -28,7 +28,7 @@ RISK_LABELS = {
 }
 
 
-def score_request(intent: str, entities: dict) -> dict:
+def score_request(intent: str, entities: dict, customer_history: list = None) -> dict:
     score = 0
     reasons = []
 
@@ -89,7 +89,26 @@ def score_request(intent: str, entities: dict) -> dict:
         score += 5
         reasons.append("No location specified — increases operational uncertainty")
 
-    final_score = min(score, 100)
+    # --- Customer history ---
+    # A returning customer with completed tasks and no high-risk incidents
+    # is meaningfully less risky than an unknown first-time requester.
+    # We reduce the score only when there is clear positive signal — not just
+    # any prior activity.
+    if customer_history:
+        completed = [t for t in customer_history if t.get("status") == "Completed"]
+        any_high = any(t.get("risk_score", 0) >= 60 for t in customer_history)
+
+        if len(completed) >= 3 and not any_high:
+            score -= 15
+            reasons.append("Returning customer with 3+ completed tasks and clean history — reduced risk")
+        elif len(completed) >= 1 and not any_high:
+            score -= 7
+            reasons.append("Returning customer with prior completed task — slightly reduced risk")
+        elif any_high:
+            score += 8
+            reasons.append("Prior high-risk task on this account — heightened caution applied")
+
+    final_score = min(max(score, 0), 100)
 
     return {
         "score": final_score,

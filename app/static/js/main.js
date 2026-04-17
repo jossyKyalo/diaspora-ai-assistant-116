@@ -1,9 +1,9 @@
 const API = {
-  submit: (msg) =>
+  submit: (msg, identifier) =>
     fetch("/tasks/submit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: msg }),
+      body: JSON.stringify({ message: msg, customer_identifier: identifier }),
     }).then((r) => r.json()),
 
   tasks: () => fetch("/dashboard/api/tasks").then((r) => r.json()),
@@ -100,8 +100,16 @@ if (submitBtn) {
 
 async function handleSubmit() {
   const msg = textarea.value.trim();
+  const identifier = document.getElementById("customerIdentifier")?.value.trim() || "";
+
   if (!msg) {
     toast("Please describe what you need.", "error");
+    return;
+  }
+
+  if (!identifier) {
+    toast("Please enter your phone or email so we can track your task.", "error");
+    document.getElementById("customerIdentifier")?.focus();
     return;
   }
 
@@ -111,7 +119,7 @@ async function handleSubmit() {
   resultPanel.classList.remove("visible");
 
   try {
-    const data = await API.submit(msg);
+    const data = await API.submit(msg, identifier);
 
     if (data.error) {
       toast(data.error, "error");
@@ -137,6 +145,15 @@ function renderResult(data) {
   document.getElementById("r-task-code").textContent = data.task_code;
   document.getElementById("r-intent").textContent = formatIntent(data.intent);
   document.getElementById("r-assignment").textContent = data.employee_assignment;
+
+  const returningEl = document.getElementById("r-returning");
+  const priorCountEl = document.getElementById("r-prior-count");
+  if (data.returning_customer) {
+    returningEl.style.display = "block";
+    priorCountEl.textContent = `${data.prior_tasks} prior task${data.prior_tasks !== 1 ? "s" : ""} on this account`;
+  } else {
+    returningEl.style.display = "none";
+  }
 
   const entityWrap = document.getElementById("r-entities");
   entityWrap.innerHTML = "";

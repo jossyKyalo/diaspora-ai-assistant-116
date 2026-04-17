@@ -1,9 +1,11 @@
 -- Vunoh Global — Task Assistant
--- Supabase / PostgreSQL schema
+-- Supabase  schema
+ 
 
 CREATE TABLE IF NOT EXISTS tasks (
   id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   task_code           TEXT NOT NULL UNIQUE,
+  customer_identifier  TEXT,
   original_message    TEXT NOT NULL,
   intent              TEXT NOT NULL,
   entities            JSONB DEFAULT '{}',
@@ -18,6 +20,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_tasks_customer  ON tasks(customer_identifier);
 CREATE INDEX IF NOT EXISTS idx_tasks_status    ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_intent    ON tasks(intent);
 CREATE INDEX IF NOT EXISTS idx_tasks_created   ON tasks(created_at DESC);
@@ -52,14 +55,15 @@ CREATE TRIGGER trg_tasks_updated_at
 
 
 -- ── Sample data ───────────────────────────────────────────────────────────────
- 
+-- Five tasks covering each intent, with full data as required by the brief.
 
-INSERT INTO tasks (task_code, original_message, intent, entities, risk_score, risk_label, risk_reasons, steps, employee_assignment, status, created_at)
+INSERT INTO tasks (task_code, original_message, customer_identifier, intent, entities, risk_score, risk_label, risk_reasons, steps, employee_assignment, status, created_at)
 VALUES
 
 (
   'VNH-A1B2C3',
   'I need to send KES 50,000 to my father in Mombasa urgently. His name is James Odhiambo.',
+  '+254712000001',
   'send_money',
   '{"amount": "KES 50000", "recipient": "James Odhiambo", "location": "Mombasa", "urgency": "urgent"}',
   60,
@@ -74,6 +78,7 @@ VALUES
 (
   'VNH-D4E5F6',
   'Please verify my land title deed for the plot I own in Karen, Nairobi. I need to confirm it has not been fraudulently transferred.',
+  '+254712000001',
   'verify_document',
   '{"document_type": "land title deed", "location": "Karen, Nairobi", "notes": "Check for fraudulent transfer"}',
   65,
@@ -88,6 +93,7 @@ VALUES
 (
   'VNH-G7H8I9',
   'Can someone clean my apartment in Westlands every Friday? I have a two-bedroom flat.',
+  '+254722000002',
   'hire_service',
   '{"service_type": "cleaning", "location": "Westlands, Nairobi", "service_date": "every Friday", "notes": "Two-bedroom flat"}',
   18,
@@ -102,6 +108,7 @@ VALUES
 (
   'VNH-J1K2L3',
   'Book an airport transfer from JKIA to Kilimani for my mother arriving this Saturday at 6am. Flight KQ101.',
+  '+254722000002',
   'airport_transfer',
   '{"recipient": "customer''s mother", "location": "JKIA to Kilimani", "service_date": "Saturday 6am", "notes": "Flight KQ101"}',
   13,
@@ -116,6 +123,7 @@ VALUES
 (
   'VNH-M4N5O6',
   'I need a lawyer to review a rental agreement for a property on Ngong Road. The landlord wants to sign next week.',
+  '+254733000003',
   'hire_service',
   '{"service_type": "legal consultation", "location": "Ngong Road, Nairobi", "service_date": "next week", "notes": "Rental agreement review"}',
   23,

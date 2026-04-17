@@ -60,6 +60,18 @@ def save_messages(task_id: str, messages: dict) -> dict:
     return response.data[0] if response.data else None
 
 
+def get_tasks_by_identifier(identifier: str) -> list:
+    client = get_client()
+    response = (
+        client.table("tasks")
+        .select("intent, risk_score, status, created_at")
+        .eq("customer_identifier", identifier.strip().lower())
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return response.data or []
+
+
 def get_messages_for_task(task_id: str) -> dict:
     client = get_client()
     response = (
