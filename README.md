@@ -11,7 +11,7 @@ An AI-powered web application that helps Kenyans in the diaspora initiate and tr
 | Backend  | Python + Flask (Blueprints) |
 | Frontend | HTML, CSS, Vanilla JS |
 | Database | Supabase (PostgreSQL) |
-| AI       | Google Gemini 1.5 Flash |
+| AI       | Groq (Llama 3.1 8B Instant)  |
 
 ---
 
@@ -26,7 +26,7 @@ vunoh/
 │   │   ├── dashboard/            # Dashboard page + tasks API
 │   │   └── messages/             # Message retrieval
 │   ├── services/
-│   │   ├── ai_service.py         # Gemini prompts: intent, steps, messages
+│   │   ├── ai_service.py         # Groq prompts: intent, steps, messages
 │   │   ├── risk_service.py       # Risk scoring logic
 │   │   └── supabase_service.py   # All database operations
 │   ├── static/
@@ -66,14 +66,14 @@ cp .env.example .env
 Open `.env` and fill in:
 
 ```
-GEMINI_API_KEY=your_gemini_api_key
+GROQ_API_KEY=your_groq_api_key
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_KEY=your_supabase_anon_key
 FLASK_SECRET_KEY=some-random-string
 FLASK_ENV=development
 ```
 
-**Get a Gemini API key:** https://aistudio.google.com/app/apikey (free, no billing required)
+**Get a Groq API key:** https://console.groq.com/keys (free, no billing required)
 
 **Get Supabase credentials:** Create a project at https://supabase.com, then go to Project Settings → API.
 
@@ -93,7 +93,7 @@ Visit http://localhost:5000
 
 ## Features
 
-- **Intent extraction** — Gemini identifies the service type and pulls out key details (amount, recipient, location, urgency, etc.)
+- **Intent extraction** — Groq identifies the service type and pulls out key details (amount, recipient, location, urgency, etc.)
 - **Risk scoring** — A rule-based engine scores each request 0–100 based on factors specific to the Kenyan diaspora context
 - **Task creation** — Every request becomes a tracked record with a unique code (e.g. `VNH-A1B2C3`)
 - **Fulfilment steps** — AI generates a logical sequence of steps tailored to the intent
@@ -129,21 +129,21 @@ Scores are additive and capped at 100. Each rule reflects a real consideration f
 
 ### Which AI tools I used and for which parts
 
-I used Claude (claude.ai) as a pair programmer throughout the build. It helped me think through the blueprint structure, draft the Gemini system prompts, and write the SQL schema. I used it like a senior developer I could talk to — I'd describe what I was trying to do, review what it gave me, and either use it, modify it, or push back on it.
+I used Claude (claude.ai) as a pair programmer throughout the build. It helped me think through the blueprint structure, draft the Groq system prompts, and write the SQL schema. I used it like a senior developer I could talk to — I'd describe what I was trying to do, review what it gave me, and either use it, modify it, or push back on it.
 
-For the actual AI brain inside the application, I chose **Gemini 2.0 Flash** because it is free, has a generous rate limit on the free tier, and is fast enough for a synchronous request flow. I initially tried `gemini-1.5-flash` which threw a 404 — that model was deprecated. Switching to `gemini-2.0-flash` resolved it immediately.
+For the actual AI brain inside the application, I chose **Groq (Llama 3.1 8B Instant) ** because it is free, has a generous rate limit on the free tier, and is fast enough for a synchronous request flow. I initially tried `gemini-1.5-flash & gemini-2.0-flash` which threw a 404 — that model was deprecated. Switching to `Groq (Llama 3.1 8B Instant)` resolved it immediately.
 
 ### How I designed the system prompts
 
-Each of the three Gemini calls (intent extraction, step generation, message generation) has its own focused system prompt. I made a deliberate decision to keep them separate rather than doing everything in one call. One call doing three things produces inconsistent structure — separating concerns makes each output more reliable and easier to validate.
+Each of the three Groq calls (intent extraction, step generation, message generation) has its own focused system prompt. I made a deliberate decision to keep them separate rather than doing everything in one call. One call doing three things produces inconsistent structure — separating concerns makes each output more reliable and easier to validate.
 
-For intent extraction, the most important constraint I added was: *"Return ONLY a valid JSON object with no markdown, no explanation, no code fences."* Without this, Gemini wraps output in triple backticks and the `json.loads` call fails. I also listed the exact fields allowed in `entities` so the model doesn't invent its own keys.
+For intent extraction, the most important constraint I added was: *"Return ONLY a valid JSON object with no markdown, no explanation, no code fences."* Without this, Groq wraps output in triple backticks and the `json.loads` call fails. I also listed the exact fields allowed in `entities` so the model doesn't invent its own keys.
 
 For message generation, I wrote detailed rules per channel rather than just saying "make a WhatsApp message." Specifying that the SMS must be under 160 characters and include the task code forced the model to actually think about the constraint rather than just producing a slightly shorter version of the email.
 
 ### One decision where I changed what the AI suggested
 
-When scaffolding the risk scoring module, the initial suggestion was to call Gemini again to score the risk — essentially asking the AI to rate its own output. I changed this to a deterministic rule-based system for two reasons. First, an AI-scored risk is a black box that cannot be explained to a customer or auditor. Second, the brief explicitly says "you will be asked to explain your scoring logic" — a model producing a number does not count as an explanation. The rule table in this README is the explanation. Every point added to a score can be traced to a line of code and a real-world reason.
+When scaffolding the risk scoring module, the initial suggestion was to call Groq again to score the risk — essentially asking the AI to rate its own output. I changed this to a deterministic rule-based system for two reasons. First, an AI-scored risk is a black box that cannot be explained to a customer or auditor. Second, the brief explicitly says "you will be asked to explain your scoring logic" — a model producing a number does not count as an explanation. The rule table in this README is the explanation. Every point added to a score can be traced to a line of code and a real-world reason.
 
 ### On customer identity
 
