@@ -68,7 +68,7 @@ function timeAgo(isoStr) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-// ── Task submission ──────────────────────────────────────────────
+// ── Task submission ──── 
 
 const textarea = document.getElementById("requestInput");
 const submitBtn = document.getElementById("submitBtn");
@@ -237,7 +237,7 @@ document.querySelectorAll(".msg-copy").forEach((btn) => {
   });
 });
 
-// ── Dashboard table ──────────────────────────────────────────────
+// ── Dashboard table ────────── 
 
 async function loadTasks() {
   const tbody = document.getElementById("tasksBody");

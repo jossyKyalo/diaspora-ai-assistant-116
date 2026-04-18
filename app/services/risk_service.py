@@ -90,10 +90,7 @@ def score_request(intent: str, entities: dict, customer_history: list = None) ->
         reasons.append("No location specified — increases operational uncertainty")
 
     # --- Customer history ---
-    # A returning customer with completed tasks and no high-risk incidents
-    # is meaningfully less risky than an unknown first-time requester.
-    # We reduce the score only when there is clear positive signal — not just
-    # any prior activity.
+    
     if customer_history:
         completed = [t for t in customer_history if t.get("status") == "Completed"]
         any_high = any(t.get("risk_score", 0) >= 60 for t in customer_history)
